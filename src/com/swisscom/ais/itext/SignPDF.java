@@ -32,6 +32,9 @@ import java.io.File;
 import java.math.BigInteger;
 import java.security.SecureRandom;
 
+import com.itextpdf.text.pdf.codec.Base64;
+import java.io.*;
+
 public class SignPDF {
 
     /**
@@ -109,6 +112,8 @@ public class SignPDF {
      */
     String propertyFilePath = null;
     
+    String signatureFile = null;
+
     /**
      * Main method to start AIS. This will parse given parameters e.g. input file, output file etc. and start signature
      * process. Furthermore this method prints error message if signing failed. See usage part in README to know how to
@@ -155,7 +160,7 @@ public class SignPDF {
         	System.err.println("Property File not found. Add '-config=VALUE'-parameter with correct path");
         
         Soap dss_soap = new Soap(verboseMode, debugMode, propertyFilePath);
-        dss_soap.sign(signature, pdfToSign, signedPDF, signingReason, signingLocation, signingContact, certificationLevel, distinguishedName, msisdn, msg, language, serialnumber);
+        dss_soap.sign(signature, pdfToSign, signedPDF, signingReason, signingLocation, signingContact, certificationLevel, distinguishedName, msisdn, msg, language, serialnumber, signatureFile);
     }
     
     private void printUsage() {
@@ -341,6 +346,15 @@ public class SignPDF {
                 language = args[i].substring(args[i].indexOf("=") + 1).trim();
             } else if (param.contains("-stepupserialnumber=")) {
             	serialnumber = args[i].substring(args[i].indexOf("=") + 1).trim();
+            } else if (param.contains("-sigfile=")) {
+                signatureFile = args[i].substring(args[i].indexOf("=") + 1).trim();
+                PDF pdf = new PDF(pdfToSign, signedPDF, null, signingReason, signingLocation, signingContact, certificationLevel);
+                String signatureHash = readFile(signatureFile).trim();
+                System.out.println(signatureHash.length());
+                byte[] externalSignature = Base64.decode(signatureHash);
+                int estimatedSize = 30000;
+                pdf.createSignedPdf(externalSignature, estimatedSize);
+                System.exit(0);
             } else if (param.contains("-config=")) {
                 propertyFilePath = args[i].substring(args[i].indexOf("=") + 1).trim();
                 File propertyFile = new File(propertyFilePath);
@@ -366,6 +380,18 @@ public class SignPDF {
         	printUsage("Mandatory option -outfile is missing");
         } 
         
+    }
+
+    private String readFile(String filePath) throws Exception {
+        FileReader fileReader = new FileReader(filePath);
+        BufferedReader bufferedReader = new BufferedReader(fileReader);
+        String result = "";
+        String line;
+        while((line = bufferedReader.readLine()) != null) {
+            result += line + "\n";
+        }
+        bufferedReader.close();
+        return result;
     }
 
     /**

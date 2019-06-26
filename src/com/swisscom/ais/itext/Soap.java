@@ -200,7 +200,7 @@ public class Soap {
     public void sign(@Nonnull Include.Signature signatureType, @Nonnull String fileIn, @Nonnull String fileOut,
                      @Nullable String signingReason, @Nullable String signingLocation, @Nullable String signingContact,
                      @Nullable int certificationLevel, @Nullable String distinguishedName, @Nullable String msisdn, 
-                     @Nullable String msg, @Nullable String language, @Nullable String serialnumber)
+                     @Nullable String msg, @Nullable String language, @Nullable String serialnumber, @Nullable String signatureFile)
             throws Exception {
 
     	// LATER throw a specific Exception and not the generic one
@@ -270,7 +270,8 @@ public class Soap {
                 		serialnumber, 
                 		requestId,
                 		pollingInterval,
-                		pollRetries);
+                		pollRetries,
+                        signatureFile);
             
             } else if (signatureType.equals(Include.Signature.ONDEMAND)) {
                 
@@ -333,7 +334,8 @@ public class Soap {
                                                   @Nonnull String distinguishedName, @Nonnull String phoneNumber, @Nonnull String certReqMsg,
                                                   @Nonnull String certReqMsgLang, @Nonnull String certReqSerialNumber, String requestId,
                                                   @Nonnull long pollingInterval,
-                                                  @Nonnull int pollRetries) throws Exception {
+                                                  @Nonnull int pollRetries,
+                                                  @Nullable String signatureFile) throws Exception {
         String[] additionalProfiles;
 
         
@@ -364,7 +366,7 @@ public class Soap {
                 certReqMsg, certReqMsgLang, certReqSerialNumber, null, requestId);
 
         // On-demand requests with step-up must be asynchronous
-        signDocumentAsync(sigReqMsg, serverURI, pdfs, claimedIdentity, pollingInterval, pollRetries, estimatedSize, "Base64Signature");
+        signDocumentAsync(sigReqMsg, serverURI, pdfs, claimedIdentity, pollingInterval, pollRetries, estimatedSize, "Base64Signature", signatureFile);
     }
     
     /**
@@ -551,7 +553,8 @@ public class Soap {
     		@Nonnull long interval,
     		@Nonnull int retries,
             int estimatedSize, 
-            String signNodeName) throws Exception {
+            String signNodeName, 
+            String signatureFile) throws Exception {
 
         String sigResponse = sendRequest(sigReqMsg, serverURI);
         ArrayList<String> responseResult = getTextFromXmlText(sigResponse, "ResultMajor");

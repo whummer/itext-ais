@@ -192,7 +192,16 @@ public class PDF {
      */
     public void createSignedPdf(@Nonnull byte[] externalSignature, int estimatedSize) throws Exception {
     	// Check if source pdf is not protected by a certification
-    	if (pdfReader.getCertificationLevel() == PdfSignatureAppearance.CERTIFIED_NO_CHANGES_ALLOWED)
+        if (pdfReader == null) {
+            pdfReader = new PdfReader(inputFilePath, pdfPassword != null ? pdfPassword.getBytes() : null);
+        }
+        if (pdfSignature == null) {
+            Calendar signingTime = Calendar.getInstance();
+            Include.HashAlgorithm hashAlgo = Include.HashAlgorithm.valueOf("SHA256");
+            getPdfHash(signingTime, estimatedSize, hashAlgo.getHashAlgorythm(), false);
+        }
+    	System.out.println(pdfReader);
+        if (pdfReader.getCertificationLevel() == PdfSignatureAppearance.CERTIFIED_NO_CHANGES_ALLOWED)
     		throw new Exception("Could not apply signature because source file contains a certification that does not allow any changes to the document");
     	
     	if (Soap._debugMode) {
